@@ -229,17 +229,17 @@ def evaluate(model, loader, mode, cfg, save_path, ddp=False):
     result_txt += f"\niou per class {list(map(lambda x: round(x, 4), test_ious))}"
     result_txt += f"\nprecision : {test_precision:.4f}, recall : {test_recall:.4f}, f1score : {test_f1score:.4f} " 
     print(result_txt)
-    result_save_path = "./test_save_files/"+cfg["dataset"]+"_test"
+    result_save_path = os.path.join(".", "test_save_files", cfg["dataset"]+"_test")
     os.makedirs(result_save_path, exist_ok=True)
-    with open(os.path.join(result_save_path,"result.txt")) as f:
+    with open(os.path.join(result_save_path,"result.txt"), "w") as f:
         f.write(result_txt)
     return mIOU, iou_class, img_ret
 
 
 def main():
     parser = argparse.ArgumentParser(description='Semi-Supervised Semantic Segmentation')
-    parser.add_argument('--config', type=str, default="./configs/CWFID_percent30")
-    parser.add_argument('--ckpt-path', type=str, default="./save_files/...")
+    parser.add_argument('--config', type=str, default="./configs/CWFID_percent30.yaml")
+    parser.add_argument('--ckpt-path', type=str, default="D:/PrevMatch/save_files/CWFID_percent305/best.pth")
     parser.add_argument('--save-map', type=str, default=False)
 
     args = parser.parse_args()
@@ -254,15 +254,15 @@ def main():
     model.cuda()
     print('Total params: {:.1f}M\n'.format(count_params(model)))
 
-    valset = SemiDataset(cfg['dataset'], cfg['data_root'], 'val')
+    valset = SemiDataset(cfg['dataset'], cfg['data_root'], 'test')
     valloader = DataLoader(valset, batch_size=1, pin_memory=True, num_workers=1, drop_last=False)
     
     eval_mode = 'sliding_window' if cfg['dataset'] == 'cityscapes' else 'original'
-    mIoU, iou_class = evaluate(model, valloader, eval_mode, cfg, save_path=args.ckpt_path)
+    mIoU, iou_class, img_ret = evaluate(model, valloader, eval_mode, cfg, save_path=args.ckpt_path)
 
     for (cls_idx, iou) in enumerate(iou_class):
         print('***** Evaluation ***** >>>> Class [{:} {:}] '
-                    'IoU: {:.2f}'.format(cls_idx, CLASSES[cfg['dataset']][cls_idx], iou))
+                    'IoU: {:.2f}'.format(cls_idx, CLASSES["default"][cls_idx], iou))
     print('***** Evaluation {} ***** >>>> MeanIoU: {:.2f}\n'.format(eval_mode, mIoU))
     
     
