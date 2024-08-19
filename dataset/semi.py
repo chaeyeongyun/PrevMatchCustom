@@ -36,7 +36,7 @@ class SemiDataset(Dataset):
         id = self.ids[item]
         img = Image.open(os.path.join(self.root, "input", id)).convert('RGB')
         if (self.mode == "train_l") or (self.mode == "test") or (self.mode == "val"):
-            mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, "target", id))))
+            mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, "target", id)).convert("L")))
         else:
             mask = Image.fromarray(np.zeros(img.size))
 
